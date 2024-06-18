@@ -45,28 +45,33 @@ export default function Home() {
       }));
       return annotationsMock;
     };
-    console.log(annotationsMap());
     setAnnotations(annotationsMap());
   }, []);
 
   function handleInputChange(e: any) {
     const { name, value } = e.target;
-    const id = parseInt(name);
+    const id = annotations.length + 1;
     console.log(annotations);
-    setAnnotation((pv) => ({ ...pv, ["id"]: id, ["name"]: value }));
+    setAnnotation((pv) => ({ ...pv, [name]: value, ["id"]: id }));
   }
 
   async function onSubmit(e: any) {
     e.preventDefault(0);
+    console.log(annotation);
     annotationsMock.push(annotation);
-    setAnnotation((pv) => ({ ...pv, ["id"]: 0, ["name"]: "" }));
+    setAnnotation((pv) => ({
+      ...pv,
+      ["id"]: 0,
+      ["name"]: "",
+      ["group"]: IGroup.GENERAL,
+    }));
   }
 
   return (
     <Flex
       w="100%"
       h={"100%"}
-      mt={"5rem"}
+      my={"5rem"}
       justifyContent={"center"}
       alignItems={"center"}
     >
@@ -84,7 +89,7 @@ export default function Home() {
                 <FormLabel>Anotação: </FormLabel>
                 <Input
                   placeholder="Digite uma anotação"
-                  name={`${annotations.length + 1}`}
+                  name={"name"}
                   onChange={(e: any) => handleInputChange(e)}
                   value={annotation.name}
                 ></Input>
@@ -92,12 +97,14 @@ export default function Home() {
               <FormControl isRequired>
                 <FormLabel>Selecione o tipo da tarefa: </FormLabel>
                 <Select
-                  name={annotation.group}
+                  name={"group"}
                   onChange={(e: any) => handleInputChange(e)}
-                  // value={annotations}
                 >
+                  <option value={IGroup.GENERAL} hidden>
+                    {IGroupValue.general}
+                  </option>
                   {annotations.map((annotations) => (
-                    <option key={annotations.id}>{`${
+                    <option key={annotations.id} value={annotations.group}>{`${
                       IGroupValue[annotations.group]
                     }`}</option>
                   ))}
