@@ -16,9 +16,17 @@ import {
   CardBody,
   CardFooter,
   Flex,
+  Badge,
+  Tr,
+  Th,
+  Tbody,
+  Thead,
+  Table,
+  Td,
+  Select,
 } from "@chakra-ui/react";
 import { annotationsMock } from "@data/annotations";
-import { IAnnotation } from "@/interface/annotation";
+import { IAnnotation, IGroup, IGroupValue } from "@/interface/annotation";
 import { FaFilePen } from "react-icons/fa6";
 import { useEffect, useState } from "react";
 
@@ -27,12 +35,13 @@ export default function Home() {
   const [annotation, setAnnotation] = useState<IAnnotation>({
     id: 0,
     name: "",
+    group: IGroup.GENERAL,
   });
 
   useEffect(() => {
     const annotationsMap = () => {
       annotationsMock.map((annotationsMock) => ({
-        [annotationsMock.id]: annotationsMock.name,
+        [annotationsMock.id]: annotationsMock.group,
       }));
       return annotationsMock;
     };
@@ -41,22 +50,28 @@ export default function Home() {
 
   function handleInputChange(e: any) {
     const { name, value } = e.target;
-    const id = parseInt(name);
+    const id = annotations.length + 1;
     console.log(annotations);
-    setAnnotation((pv) => ({ ...pv, ["id"]: id, ["name"]: value }));
+    setAnnotation((pv) => ({ ...pv, [name]: value, ["id"]: id }));
   }
 
   async function onSubmit(e: any) {
     e.preventDefault(0);
+    console.log(annotation);
     annotationsMock.push(annotation);
-    setAnnotation((pv) => ({ ...pv, ["id"]: 0, ["name"]: "" }));
+    setAnnotation((pv) => ({
+      ...pv,
+      ["id"]: 0,
+      ["name"]: "",
+      ["group"]: IGroup.GENERAL,
+    }));
   }
 
   return (
     <Flex
       w="100%"
       h={"100%"}
-      mt={"5rem"}
+      my={"5rem"}
       justifyContent={"center"}
       alignItems={"center"}
     >
@@ -74,10 +89,26 @@ export default function Home() {
                 <FormLabel>Anotação: </FormLabel>
                 <Input
                   placeholder="Digite uma anotação"
-                  name={`${annotations.length + 1}`}
+                  name={"name"}
                   onChange={(e: any) => handleInputChange(e)}
                   value={annotation.name}
                 ></Input>
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Selecione o tipo da tarefa: </FormLabel>
+                <Select
+                  name={"group"}
+                  onChange={(e: any) => handleInputChange(e)}
+                >
+                  <option value={IGroup.GENERAL} hidden>
+                    {IGroupValue.general}
+                  </option>
+                  {annotations.map((annotations) => (
+                    <option key={annotations.id} value={annotations.group}>{`${
+                      IGroupValue[annotations.group]
+                    }`}</option>
+                  ))}
+                </Select>
               </FormControl>
               <Button type="submit" w={"min-content"}>
                 Enviar
@@ -90,11 +121,27 @@ export default function Home() {
             Lista de Anotações
           </Heading>
           <Box>
-            <UnorderedList>
-              {annotations.map((annotations) => (
-                <ListItem key={annotations.id}>{annotations.name}</ListItem>
-              ))}
-            </UnorderedList>
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>ID</Th>
+                  <Th>Tipo</Th>
+                  <Th>Tarefa</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {annotations.map((annotations) => (
+                  <Tr key={annotations.id}>
+                    <Td>{annotations.id}</Td>
+                    <Td>
+                      {" "}
+                      <Badge>{IGroupValue[annotations.group]}</Badge>
+                    </Td>
+                    <Td>{annotations.name}</Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
           </Box>
         </CardFooter>
       </Card>
