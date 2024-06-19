@@ -25,6 +25,7 @@ import {
   Td,
   Select,
 } from "@chakra-ui/react";
+import Pagination from "@choc-ui/paginator";
 import { annotationsMock } from "@data/annotations";
 import { IAnnotation, IGroup, IGroupValue } from "@/interface/annotation";
 import { FaFilePen } from "react-icons/fa6";
@@ -39,32 +40,37 @@ export default function Home() {
   });
 
   useEffect(() => {
-    const annotationsMap = () => {
-      annotationsMock.map((annotationsMock) => ({
-        [annotationsMock.id]: annotationsMock.group,
-      }));
-      return annotationsMock;
-    };
-    setAnnotations(annotationsMap());
+    setAnnotations(annotationsMock);
   }, []);
 
   function handleInputChange(e: any) {
     const { name, value } = e.target;
     const id = annotations.length + 1;
-    console.log(annotations);
     setAnnotation((pv) => ({ ...pv, [name]: value, ["id"]: id }));
   }
 
   async function onSubmit(e: any) {
     e.preventDefault(0);
-    console.log(annotation);
-    annotationsMock.push(annotation);
+    annotations.push(annotation);
     setAnnotation((pv) => ({
       ...pv,
       ["id"]: 0,
       ["name"]: "",
       ["group"]: IGroup.GENERAL,
     }));
+  }
+
+  async function searchTask(e: any) {
+    const { name, value } = e.target;
+    const lowerCaseValue = value.toLowerCase();
+    const regex = new RegExp(`${lowerCaseValue}`);
+    const filterAnnotation = annotations.filter((e) =>
+      e.name.toLowerCase().match(regex)
+    );
+    if (value) {
+      return setAnnotations(filterAnnotation);
+    }
+    return setAnnotations(annotationsMock);
   }
 
   return (
@@ -99,14 +105,12 @@ export default function Home() {
                 <Select
                   name={"group"}
                   onChange={(e: any) => handleInputChange(e)}
+                  value={annotation.group}
                 >
-                  <option value={IGroup.GENERAL} hidden>
-                    {IGroupValue.general}
-                  </option>
-                  {annotations.map((annotations) => (
-                    <option key={annotations.id} value={annotations.group}>{`${
-                      IGroupValue[annotations.group]
-                    }`}</option>
+                  {Object.entries(IGroup).map(([key, value]) => (
+                    <option key={key} value={value}>
+                      {`${IGroupValue[value]}`}
+                    </option>
                   ))}
                 </Select>
               </FormControl>
@@ -120,7 +124,13 @@ export default function Home() {
           <Heading textAlign={"center"} mb={"2rem"}>
             Lista de Anotações
           </Heading>
-          <Box>
+          <Input
+            type="search"
+            name="name"
+            onChange={(e) => searchTask(e)}
+            placeholder="Pesquise a tarefa"
+          ></Input>
+          <Box mt={"1.5rem"}>
             <Table>
               <Thead>
                 <Tr>
@@ -131,17 +141,31 @@ export default function Home() {
               </Thead>
               <Tbody>
                 {annotations.map((annotations) => (
-                  <Tr key={annotations.id}>
+                  <Tr key={annotations.id} id="taskBar">
                     <Td>{annotations.id}</Td>
                     <Td>
                       {" "}
                       <Badge>{IGroupValue[annotations.group]}</Badge>
                     </Td>
-                    <Td>{annotations.name}</Td>
+                    <Td>
+                      <Box as="span" id="annotationRow">
+                        {annotations.name}
+                      </Box>
+                    </Td>
                   </Tr>
                 ))}
               </Tbody>
             </Table>
+            <Flex w="full" p={50} alignItems="center" justifyContent="center">
+              <Pagination
+                defaultCurrent={1}
+                colorScheme="blue"
+                total={50}
+                paginationProps={{
+                  display: "flex",
+                }}
+              />
+            </Flex>
           </Box>
         </CardFooter>
       </Card>

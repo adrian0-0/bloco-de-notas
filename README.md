@@ -1,5 +1,7 @@
 Ideia: <https://www.freecodecamp.org/portuguese/news/8-ideias-de-projeto-com-o-react-js-para-voce-comecar-a-aprender-fazendo/>
 
+<!-- https://salehmubashar.com/blog/create-a-search-bar-in-react-js -->
+
 ## Getting Started
 
 First, run the development server:
