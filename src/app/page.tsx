@@ -23,6 +23,7 @@ import {
   Thead,
   Table,
   Td,
+  Text,
   Select,
 } from "@chakra-ui/react";
 import Pagination from "@choc-ui/paginator";
@@ -30,6 +31,7 @@ import { annotationsMock } from "@data/annotations";
 import { IAnnotation, IGroup, IGroupValue } from "@/interface/annotation";
 import { FaFilePen } from "react-icons/fa6";
 import { useEffect, useState } from "react";
+import React, { forwardRef } from "react";
 
 export default function Home() {
   const [annotations, setAnnotations] = useState<IAnnotation[]>([]);
@@ -38,10 +40,25 @@ export default function Home() {
     name: "",
     group: IGroup.GENERAL,
   });
+  const [annotationsPage, setAnnotationsPage] = useState<IAnnotation[]>([]);
+  const [current, setCurrent] = useState(1);
+  const [annotationsPageVisibility, setAnnotationsPageVisibility] =
+    useState(true);
+  const pageSize = 2;
+  const offset = (current - 1) * pageSize;
 
   useEffect(() => {
     setAnnotations(annotationsMock);
   }, []);
+
+  useEffect(() => {
+    const eachAnnotationsPage = annotationsMock.slice(
+      offset,
+      offset + pageSize
+    );
+    setAnnotationsPage(eachAnnotationsPage);
+    setAnnotationsPageVisibility(true);
+  }, [current]);
 
   function handleInputChange(e: any) {
     const { name, value } = e.target;
@@ -62,6 +79,7 @@ export default function Home() {
 
   async function searchTask(e: any) {
     const { name, value } = e.target;
+    setAnnotationsPageVisibility(false);
     const lowerCaseValue = value.toLowerCase();
     const regex = new RegExp(`${lowerCaseValue}`);
     const filterAnnotation = annotations.filter((e) =>
@@ -69,6 +87,8 @@ export default function Home() {
     );
     if (value) {
       return setAnnotations(filterAnnotation);
+    } else if (value === "") {
+      setAnnotationsPageVisibility(true);
     }
     return setAnnotations(annotationsMock);
   }
@@ -140,27 +160,46 @@ export default function Home() {
                 </Tr>
               </Thead>
               <Tbody>
-                {annotations.map((annotations) => (
-                  <Tr key={annotations.id} id="taskBar">
-                    <Td>{annotations.id}</Td>
-                    <Td>
-                      {" "}
-                      <Badge>{IGroupValue[annotations.group]}</Badge>
-                    </Td>
-                    <Td>
-                      <Box as="span" id="annotationRow">
-                        {annotations.name}
-                      </Box>
-                    </Td>
-                  </Tr>
-                ))}
+                {annotationsPageVisibility &&
+                  annotationsPage.map((annotations) => (
+                    <Tr key={annotations.id}>
+                      <Td>{annotations.id}</Td>
+                      <Td>
+                        {" "}
+                        <Badge>{IGroupValue[annotations.group]}</Badge>
+                      </Td>
+                      <Td>{annotations.name}</Td>
+                    </Tr>
+                  ))}
+
+                {!annotationsPageVisibility &&
+                  annotations.map((annotations) => (
+                    <Tr key={annotations.id}>
+                      <Td>{annotations.id}</Td>
+                      <Td>
+                        {" "}
+                        <Badge>{IGroupValue[annotations.group]}</Badge>
+                      </Td>
+                      <Td>{annotations.name}</Td>
+                    </Tr>
+                  ))}
               </Tbody>
             </Table>
-            <Flex w="full" p={50} alignItems="center" justifyContent="center">
+            <Flex
+              w="full"
+              p={50}
+              alignItems="center"
+              justifyContent="center"
+              display={annotationsPageVisibility ? "flex" : "none"}
+            >
               <Pagination
                 defaultCurrent={1}
                 colorScheme="blue"
-                total={50}
+                pageSize={pageSize}
+                total={annotations.length}
+                onChange={(e: any) => {
+                  setCurrent(e);
+                }}
                 paginationProps={{
                   display: "flex",
                 }}
