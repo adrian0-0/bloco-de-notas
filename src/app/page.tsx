@@ -8,7 +8,7 @@ import {
   FormLabel,
   Heading,
   Input,
-  Stack,
+  HStack,
   UnorderedList,
   ListItem,
   Card,
@@ -25,6 +25,12 @@ import {
   Td,
   Text,
   Select,
+  IconButton,
+  Stack,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from "@chakra-ui/react";
 import Pagination from "@choc-ui/paginator";
 import { annotationsMock } from "@data/annotations";
@@ -32,9 +38,11 @@ import { IAnnotation, IGroup, IGroupValue } from "@/interface/annotation";
 import { FaFilePen } from "react-icons/fa6";
 import { useEffect, useState } from "react";
 import React, { forwardRef } from "react";
+import { FaFilter } from "react-icons/fa6";
 
 export default function Home() {
   const [annotations, setAnnotations] = useState<IAnnotation[]>([]);
+  const [annotationsMocks, setAnnotationsMocks] = useState<IAnnotation[]>([]);
   const [annotation, setAnnotation] = useState<IAnnotation>({
     id: 0,
     name: "",
@@ -45,18 +53,34 @@ export default function Home() {
   const [annotationsPageVisibility, setAnnotationsPageVisibility] =
     useState(true);
   const pageSize = 2;
-  const offset = (current - 1) * pageSize;
-
-  useEffect(() => {
-    setAnnotations(annotationsMock);
-  }, []);
-
-  useEffect(() => {
+  const pagination = () => {
+    const offset = (current - 1) * pageSize;
     const eachAnnotationsPage = annotationsMock.slice(
       offset,
       offset + pageSize
     );
-    setAnnotationsPage(eachAnnotationsPage);
+    return eachAnnotationsPage;
+  };
+
+  useEffect(() => {
+    fetch("https://6679ca0318a459f6395172e9.mockapi.io/annotations")
+      .then((response) => response.json())
+      .then((json) => {
+        setAnnotations((pv) => ({ ...pv, json }));
+        setAnnotationsMocks(json);
+        console.log(json);
+      });
+
+    // const eachAnnotationsPage = annotationsMock.slice(
+    //   offset,
+    //   offset + pageSize
+    // );
+    console.log(annotationsMock);
+    // setAnnotationsPage(pagination());
+  }, []);
+
+  useEffect(() => {
+    // setAnnotationsPage(eachAnnotationsPage);
     setAnnotationsPageVisibility(true);
   }, [current]);
 
@@ -155,7 +179,19 @@ export default function Home() {
               <Thead>
                 <Tr>
                   <Th>ID</Th>
-                  <Th>Tipo</Th>
+                  <Th w={"10px"} h={"10px"}>
+                    <HStack spacing={"0.5rem"}>
+                      <Text>Tipo</Text>
+                      <IconButton
+                        colorScheme="blue"
+                        aria-label="Search database"
+                        h={"25px"}
+                        minW={"inherit"}
+                        width={"25px !important"}
+                        icon={<FaFilter size={"15px"} />}
+                      />
+                    </HStack>
+                  </Th>
                   <Th>Tarefa</Th>
                 </Tr>
               </Thead>
