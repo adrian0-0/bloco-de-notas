@@ -33,7 +33,6 @@ import {
   MenuItem,
 } from "@chakra-ui/react";
 import Pagination from "@choc-ui/paginator";
-// import { annotationsMock } from "@data/annotations";
 import { IAnnotation, IGroup, IGroupValue } from "@/interface/annotation";
 import { FaFilePen } from "react-icons/fa6";
 import { useEffect, useState } from "react";
@@ -218,7 +217,6 @@ export default function Home() {
                   ))}
               </Tbody>
             </Table>
-            {JSON.stringify(annotationsMocks)}
             <Flex
               w="full"
               p={50}
