@@ -1,5 +1,5 @@
 export interface IAnnotation {
-  id: number;
+  id: string;
   name: string;
   group: IGroup;
 }

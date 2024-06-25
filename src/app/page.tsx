@@ -8,7 +8,7 @@ import {
   FormLabel,
   Heading,
   Input,
-  Stack,
+  HStack,
   UnorderedList,
   ListItem,
   Card,
@@ -25,18 +25,26 @@ import {
   Td,
   Text,
   Select,
+  IconButton,
+  Stack,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from "@chakra-ui/react";
 import Pagination from "@choc-ui/paginator";
-import { annotationsMock } from "@data/annotations";
+// import { annotationsMock } from "@data/annotations";
 import { IAnnotation, IGroup, IGroupValue } from "@/interface/annotation";
 import { FaFilePen } from "react-icons/fa6";
 import { useEffect, useState } from "react";
 import React, { forwardRef } from "react";
+import { FaFilter } from "react-icons/fa6";
 
 export default function Home() {
   const [annotations, setAnnotations] = useState<IAnnotation[]>([]);
+  const [annotationsMocks, setAnnotationsMocks] = useState<IAnnotation[]>([]);
   const [annotation, setAnnotation] = useState<IAnnotation>({
-    id: 0,
+    id: "0",
     name: "",
     group: IGroup.GENERAL,
   });
@@ -44,34 +52,47 @@ export default function Home() {
   const [current, setCurrent] = useState(1);
   const [annotationsPageVisibility, setAnnotationsPageVisibility] =
     useState(true);
-  const pageSize = 2;
-  const offset = (current - 1) * pageSize;
-
-  useEffect(() => {
-    setAnnotations(annotationsMock);
-  }, []);
-
-  useEffect(() => {
-    const eachAnnotationsPage = annotationsMock.slice(
+  const pageSize = 5;
+  const pagination = () => {
+    const offset = (current - 1) * pageSize;
+    const eachAnnotationsPage = annotationsMocks.slice(
       offset,
       offset + pageSize
     );
-    setAnnotationsPage(eachAnnotationsPage);
+    return eachAnnotationsPage;
+  };
+  useEffect(() => {
+    fetch("https://6679ca0318a459f6395172e9.mockapi.io/annotations")
+      .then((response) => response.json())
+      .then((json) => {
+        setAnnotations((pv) => ({ ...pv, json }));
+        setAnnotationsMocks(json);
+      });
+  }, []);
+
+  useEffect(() => {
+    setAnnotations(annotationsMocks);
+    setAnnotationsPage(pagination());
+  }, [annotationsMocks]);
+
+  useEffect(() => {
     setAnnotationsPageVisibility(true);
+    setAnnotationsPage(pagination());
   }, [current]);
 
   function handleInputChange(e: any) {
     const { name, value } = e.target;
     const id = annotations.length + 1;
-    setAnnotation((pv) => ({ ...pv, [name]: value, ["id"]: id }));
+    setAnnotation((pv) => ({ ...pv, [name]: value, ["id"]: id.toString() }));
   }
 
   async function onSubmit(e: any) {
     e.preventDefault(0);
     annotations.push(annotation);
+    setAnnotationsPage(pagination());
     setAnnotation((pv) => ({
       ...pv,
-      ["id"]: 0,
+      ["id"]: "0",
       ["name"]: "",
       ["group"]: IGroup.GENERAL,
     }));
@@ -90,7 +111,7 @@ export default function Home() {
     } else if (value === "") {
       setAnnotationsPageVisibility(true);
     }
-    return setAnnotations(annotationsMock);
+    return setAnnotations(annotationsMocks);
   }
 
   return (
@@ -155,7 +176,19 @@ export default function Home() {
               <Thead>
                 <Tr>
                   <Th>ID</Th>
-                  <Th>Tipo</Th>
+                  <Th w={"10px"} h={"10px"}>
+                    <HStack spacing={"0.5rem"}>
+                      <Text>Tipo</Text>
+                      <IconButton
+                        colorScheme="blue"
+                        aria-label="Search database"
+                        h={"25px"}
+                        minW={"inherit"}
+                        width={"25px !important"}
+                        icon={<FaFilter size={"15px"} />}
+                      />
+                    </HStack>
+                  </Th>
                   <Th>Tarefa</Th>
                 </Tr>
               </Thead>
@@ -185,6 +218,7 @@ export default function Home() {
                   ))}
               </Tbody>
             </Table>
+            {JSON.stringify(annotationsMocks)}
             <Flex
               w="full"
               p={50}
