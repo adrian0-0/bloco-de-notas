@@ -33,7 +33,7 @@ import {
   MenuItem,
 } from "@chakra-ui/react";
 import Pagination from "@choc-ui/paginator";
-import { annotationsMock } from "@data/annotations";
+// import { annotationsMock } from "@data/annotations";
 import { IAnnotation, IGroup, IGroupValue } from "@/interface/annotation";
 import { FaFilePen } from "react-icons/fa6";
 import { useEffect, useState } from "react";
@@ -44,7 +44,7 @@ export default function Home() {
   const [annotations, setAnnotations] = useState<IAnnotation[]>([]);
   const [annotationsMocks, setAnnotationsMocks] = useState<IAnnotation[]>([]);
   const [annotation, setAnnotation] = useState<IAnnotation>({
-    id: 0,
+    id: "0",
     name: "",
     group: IGroup.GENERAL,
   });
@@ -52,50 +52,47 @@ export default function Home() {
   const [current, setCurrent] = useState(1);
   const [annotationsPageVisibility, setAnnotationsPageVisibility] =
     useState(true);
-  const pageSize = 2;
+  const pageSize = 5;
   const pagination = () => {
     const offset = (current - 1) * pageSize;
-    const eachAnnotationsPage = annotationsMock.slice(
+    const eachAnnotationsPage = annotationsMocks.slice(
       offset,
       offset + pageSize
     );
     return eachAnnotationsPage;
   };
-
   useEffect(() => {
     fetch("https://6679ca0318a459f6395172e9.mockapi.io/annotations")
       .then((response) => response.json())
       .then((json) => {
         setAnnotations((pv) => ({ ...pv, json }));
         setAnnotationsMocks(json);
-        console.log(json);
       });
-
-    // const eachAnnotationsPage = annotationsMock.slice(
-    //   offset,
-    //   offset + pageSize
-    // );
-    console.log(annotationsMock);
-    // setAnnotationsPage(pagination());
   }, []);
 
   useEffect(() => {
-    // setAnnotationsPage(eachAnnotationsPage);
+    setAnnotations(annotationsMocks);
+    setAnnotationsPage(pagination());
+  }, [annotationsMocks]);
+
+  useEffect(() => {
     setAnnotationsPageVisibility(true);
+    setAnnotationsPage(pagination());
   }, [current]);
 
   function handleInputChange(e: any) {
     const { name, value } = e.target;
     const id = annotations.length + 1;
-    setAnnotation((pv) => ({ ...pv, [name]: value, ["id"]: id }));
+    setAnnotation((pv) => ({ ...pv, [name]: value, ["id"]: id.toString() }));
   }
 
   async function onSubmit(e: any) {
     e.preventDefault(0);
     annotations.push(annotation);
+    setAnnotationsPage(pagination());
     setAnnotation((pv) => ({
       ...pv,
-      ["id"]: 0,
+      ["id"]: "0",
       ["name"]: "",
       ["group"]: IGroup.GENERAL,
     }));
@@ -114,7 +111,7 @@ export default function Home() {
     } else if (value === "") {
       setAnnotationsPageVisibility(true);
     }
-    return setAnnotations(annotationsMock);
+    return setAnnotations(annotationsMocks);
   }
 
   return (
@@ -221,6 +218,7 @@ export default function Home() {
                   ))}
               </Tbody>
             </Table>
+            {JSON.stringify(annotationsMocks)}
             <Flex
               w="full"
               p={50}
