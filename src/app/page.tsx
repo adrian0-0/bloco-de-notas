@@ -31,6 +31,7 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  ButtonGroup,
 } from "@chakra-ui/react";
 import Pagination from "@choc-ui/paginator";
 import { IAnnotation, IGroup, IGroupValue } from "@/interface/annotation";
@@ -51,7 +52,8 @@ export default function Home() {
   const [current, setCurrent] = useState(1);
   const [annotationsPageVisibility, setAnnotationsPageVisibility] =
     useState(true);
-  const pageSize = 5;
+  const [pageCount, setPageCount] = useState<number[]>([]);
+  const pageSize = 2;
   const pagination = () => {
     const offset = (current - 1) * pageSize;
     const eachAnnotationsPage = annotationsMocks.slice(
@@ -60,6 +62,8 @@ export default function Home() {
     );
     return eachAnnotationsPage;
   };
+  const pageNumber = Math.floor(annotations.length / pageSize);
+
   useEffect(() => {
     fetch("https://6679ca0318a459f6395172e9.mockapi.io/annotations")
       .then((response) => response.json())
@@ -79,6 +83,11 @@ export default function Home() {
     setAnnotationsPage(pagination());
   }, [current]);
 
+  useEffect(() => {
+    const pageArray = Array.from({ length: pageNumber }, (v, i) => i + 1);
+    setPageCount(pageArray);
+  }, [annotations]);
+
   function handleInputChange(e: any) {
     const { name, value } = e.target;
     const id = annotations.length + 1;
@@ -89,6 +98,7 @@ export default function Home() {
     e.preventDefault(0);
     annotations.push(annotation);
     setAnnotationsPage(pagination());
+    console.log(annotations);
     setAnnotation((pv) => ({
       ...pv,
       ["id"]: "0",
@@ -162,7 +172,7 @@ export default function Home() {
         </CardBody>
         <CardFooter display={"block"}>
           <Heading textAlign={"center"} mb={"2rem"}>
-            Lista de Anotações
+            Lista de Anotações {}
           </Heading>
           <Input
             type="search"
@@ -224,7 +234,15 @@ export default function Home() {
               justifyContent="center"
               display={annotationsPageVisibility ? "flex" : "none"}
             >
-              <Pagination
+              <ButtonGroup>
+                {pageCount.map((pageCount) => (
+                  <Button key={pageCount} onClick={() => setCurrent(pageCount)}>
+                    {pageCount}
+                  </Button>
+                ))}
+              </ButtonGroup>
+
+              {/* <Pagination
                 defaultCurrent={1}
                 colorScheme="blue"
                 pageSize={pageSize}
@@ -235,7 +253,7 @@ export default function Home() {
                 paginationProps={{
                   display: "flex",
                 }}
-              />
+              /> */}
             </Flex>
           </Box>
         </CardFooter>
