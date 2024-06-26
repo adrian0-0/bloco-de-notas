@@ -36,7 +36,7 @@ import {
 import Pagination from "@choc-ui/paginator";
 import { IAnnotation, IGroup, IGroupValue } from "@/interface/annotation";
 import { FaFilePen } from "react-icons/fa6";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import React, { forwardRef } from "react";
 import { FaFilter } from "react-icons/fa6";
 
@@ -49,44 +49,40 @@ export default function Home() {
     group: IGroup.GENERAL,
   });
   const [annotationsPage, setAnnotationsPage] = useState<IAnnotation[]>([]);
-  const [current, setCurrent] = useState(1);
+  const [page, setPage] = useState(1);
   const [annotationsPageVisibility, setAnnotationsPageVisibility] =
     useState(true);
   const [pageCount, setPageCount] = useState<number[]>([]);
   const pageSize = 2;
+
   const pagination = () => {
-    const offset = (current - 1) * pageSize;
-    const eachAnnotationsPage = annotationsMocks.slice(
-      offset,
-      offset + pageSize
-    );
+    const offset = (page - 1) * pageSize;
+    const eachAnnotationsPage = annotations.slice(offset, offset + pageSize);
     return eachAnnotationsPage;
   };
-  const pageNumber = Math.floor(annotations.length / pageSize);
+
+  const totalPages = useMemo(() => {
+    const pageNumber = Math.ceil(annotations.length / pageSize);
+    const pageArray = Array.from({ length: pageNumber }, (v, i) => i + 1);
+    setPageCount(pageArray);
+  }, [annotationsPage]);
 
   useEffect(() => {
     fetch("https://6679ca0318a459f6395172e9.mockapi.io/annotations")
       .then((response) => response.json())
       .then((json) => {
-        setAnnotations((pv) => ({ ...pv, json }));
         setAnnotationsMocks(json);
+        setAnnotations(json);
       });
   }, []);
 
   useEffect(() => {
-    setAnnotations(annotationsMocks);
     setAnnotationsPage(pagination());
-  }, [annotationsMocks]);
-
-  useEffect(() => {
-    setAnnotationsPageVisibility(true);
-    setAnnotationsPage(pagination());
-  }, [current]);
-
-  useEffect(() => {
-    const pageArray = Array.from({ length: pageNumber }, (v, i) => i + 1);
-    setPageCount(pageArray);
   }, [annotations]);
+
+  useEffect(() => {
+    setAnnotationsPage(pagination());
+  }, [page]);
 
   function handleInputChange(e: any) {
     const { name, value } = e.target;
@@ -98,7 +94,6 @@ export default function Home() {
     e.preventDefault(0);
     annotations.push(annotation);
     setAnnotationsPage(pagination());
-    console.log(annotations);
     setAnnotation((pv) => ({
       ...pv,
       ["id"]: "0",
@@ -122,6 +117,10 @@ export default function Home() {
     }
     return setAnnotations(annotationsMocks);
   }
+
+  const returnPage = async () => {
+    console.log(page);
+  };
 
   return (
     <Flex
@@ -235,25 +234,19 @@ export default function Home() {
               display={annotationsPageVisibility ? "flex" : "none"}
             >
               <ButtonGroup>
+                <Button onClick={() => returnPage()}>{`<`}</Button>
                 {pageCount.map((pageCount) => (
-                  <Button key={pageCount} onClick={() => setCurrent(pageCount)}>
+                  <Button
+                    key={pageCount}
+                    onClick={() => {
+                      setPage(pageCount);
+                    }}
+                  >
                     {pageCount}
                   </Button>
                 ))}
+                <Button>{`>`}</Button>
               </ButtonGroup>
-
-              {/* <Pagination
-                defaultCurrent={1}
-                colorScheme="blue"
-                pageSize={pageSize}
-                total={annotations.length}
-                onChange={(e: any) => {
-                  setCurrent(e);
-                }}
-                paginationProps={{
-                  display: "flex",
-                }}
-              /> */}
             </Flex>
           </Box>
         </CardFooter>
