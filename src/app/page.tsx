@@ -52,12 +52,17 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [annotationsPageVisibility, setAnnotationsPageVisibility] =
     useState(true);
+  const [disableReturnButtonPage, setDisableReturnButtonPage] = useState(false);
+  const [disableAdvanceButtonPage, setDisableAdvanceButtonPage] =
+    useState(false);
+  useState(true);
   const [pageCount, setPageCount] = useState<number[]>([]);
   const pageSize = 2;
 
   const pagination = () => {
     const offset = (page - 1) * pageSize;
     const eachAnnotationsPage = annotations.slice(offset, offset + pageSize);
+    console.log(eachAnnotationsPage);
     return eachAnnotationsPage;
   };
 
@@ -77,12 +82,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    setAnnotationsPage(pagination());
-  }, [annotations]);
-
-  useEffect(() => {
-    setAnnotationsPage(pagination());
-  }, [page]);
+    setAnnotationsPage(pagination);
+  }, [annotations, page]);
 
   function handleInputChange(e: any) {
     const { name, value } = e.target;
@@ -93,13 +94,12 @@ export default function Home() {
   async function onSubmit(e: any) {
     e.preventDefault(0);
     annotations.push(annotation);
-    setAnnotationsPage(pagination());
-    setAnnotation((pv) => ({
-      ...pv,
+    setAnnotationsPage(pagination);
+    setAnnotation({
       ["id"]: "0",
       ["name"]: "",
       ["group"]: IGroup.GENERAL,
-    }));
+    });
   }
 
   async function searchTask(e: any) {
@@ -107,7 +107,7 @@ export default function Home() {
     setAnnotationsPageVisibility(false);
     const lowerCaseValue = value.toLowerCase();
     const regex = new RegExp(`${lowerCaseValue}`);
-    const filterAnnotation = annotations.filter((e) =>
+    const filterAnnotation = annotationsMocks.filter((e) =>
       e.name.toLowerCase().match(regex)
     );
     if (value) {
@@ -118,8 +118,42 @@ export default function Home() {
     return setAnnotations(annotationsMocks);
   }
 
-  const returnPage = async () => {
-    console.log(page);
+  // COM USE MEMO
+  // const returnPage = useMemo(() => {
+  //   if (page === 1) {
+  //     return setDisableReturnButtonPage(true);
+  //   }
+  //   setDisableAdvanceButtonPage(false);
+  //   setDisableReturnButtonPage(false);
+  //   return setPage(page - 1);
+  // }, [page]);
+
+  //SEM USE MEMO
+  const returnPage = () => {
+    if (page === 1) {
+      return setDisableReturnButtonPage(true);
+    }
+    setDisableAdvanceButtonPage(false);
+    setDisableReturnButtonPage(false);
+    return setPage(page - 1);
+  };
+
+  const advancePage = () => {
+    const lastPage = pageCount.length;
+    if (page === lastPage) {
+      return setDisableAdvanceButtonPage(true);
+    }
+    setDisableReturnButtonPage(false);
+    setDisableAdvanceButtonPage(false);
+    return setPage(page + 1);
+  };
+
+  const handleGroupFilter = async (index: any) => {
+    setAnnotationsPageVisibility(false);
+    const groupFilter = annotationsMocks.filter(function (e) {
+      return e.group === index;
+    });
+    return setAnnotations(groupFilter);
   };
 
   return (
@@ -153,7 +187,9 @@ export default function Home() {
                 <FormLabel>Selecione o tipo da tarefa: </FormLabel>
                 <Select
                   name={"group"}
-                  onChange={(e: any) => handleInputChange(e)}
+                  onChange={(e: any) => {
+                    handleInputChange(e);
+                  }}
                   value={annotation.group}
                 >
                   {Object.entries(IGroup).map(([key, value]) => (
@@ -171,7 +207,7 @@ export default function Home() {
         </CardBody>
         <CardFooter display={"block"}>
           <Heading textAlign={"center"} mb={"2rem"}>
-            Lista de Anotações {}
+            Lista de Anotações
           </Heading>
           <Input
             type="search"
@@ -187,14 +223,29 @@ export default function Home() {
                   <Th w={"10px"} h={"10px"}>
                     <HStack spacing={"0.5rem"}>
                       <Text>Tipo</Text>
-                      <IconButton
-                        colorScheme="blue"
-                        aria-label="Search database"
-                        h={"25px"}
-                        minW={"inherit"}
-                        width={"25px !important"}
-                        icon={<FaFilter size={"15px"} />}
-                      />
+                      <Menu>
+                        <MenuButton
+                          as={IconButton}
+                          colorScheme="blue"
+                          h={"25px"}
+                          minW={"inherit"}
+                          width={"25px"}
+                          icon={<FaFilter size={"15px"} />}
+                        ></MenuButton>
+                        <MenuList>
+                          {Object.entries(IGroup).map(([key, index]) => (
+                            <MenuItem
+                              key={key}
+                              name="group"
+                              onClick={(e) => {
+                                handleGroupFilter(index);
+                              }}
+                            >
+                              {IGroupValue[index]}
+                            </MenuItem>
+                          ))}
+                        </MenuList>
+                      </Menu>
                     </HStack>
                   </Th>
                   <Th>Tarefa</Th>
@@ -212,7 +263,6 @@ export default function Home() {
                       <Td>{annotations.name}</Td>
                     </Tr>
                   ))}
-
                 {!annotationsPageVisibility &&
                   annotations.map((annotations) => (
                     <Tr key={annotations.id}>
@@ -234,7 +284,10 @@ export default function Home() {
               display={annotationsPageVisibility ? "flex" : "none"}
             >
               <ButtonGroup>
-                <Button onClick={() => returnPage()}>{`<`}</Button>
+                <Button
+                  onClick={() => returnPage()}
+                  isDisabled={disableReturnButtonPage}
+                >{`<`}</Button>
                 {pageCount.map((pageCount) => (
                   <Button
                     key={pageCount}
@@ -245,7 +298,10 @@ export default function Home() {
                     {pageCount}
                   </Button>
                 ))}
-                <Button>{`>`}</Button>
+                <Button
+                  onClick={() => advancePage()}
+                  isDisabled={disableAdvanceButtonPage}
+                >{`>`}</Button>
               </ButtonGroup>
             </Flex>
           </Box>
