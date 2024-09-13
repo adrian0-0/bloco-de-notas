@@ -36,7 +36,13 @@ import {
 import Pagination from "@choc-ui/paginator";
 import { IAnnotation, IGroup, IGroupValue } from "@/interface/annotation";
 import { FaFilePen } from "react-icons/fa6";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import React, { forwardRef } from "react";
 import { FaFilter } from "react-icons/fa6";
 
@@ -48,7 +54,9 @@ export default function Home() {
     name: "",
     group: IGroup.GENERAL,
   });
-  const [annotationsPage, setAnnotationsPage] = useState<IAnnotation[]>([]);
+  const [currentPageAnnotations, setCurrentPageAnnotations] = useState<
+    IAnnotation[]
+  >([]);
   const [page, setPage] = useState(1);
   const [annotationsPageVisibility, setAnnotationsPageVisibility] =
     useState(true);
@@ -59,47 +67,31 @@ export default function Home() {
   const [pageCount, setPageCount] = useState<number[]>([]);
   const pageSize = 2;
 
-  const pagination = () => {
-    const offset = (page - 1) * pageSize;
-    const eachAnnotationsPage = annotations.slice(offset, offset + pageSize);
-    console.log(eachAnnotationsPage);
-    return eachAnnotationsPage;
-  };
-
   const totalPages = useMemo(() => {
     const pageNumber = Math.ceil(annotations.length / pageSize);
     const pageArray = Array.from({ length: pageNumber }, (v, i) => i + 1);
     setPageCount(pageArray);
-  }, [annotationsPage]);
 
-  useEffect(() => {
-    fetch("https://6679ca0318a459f6395172e9.mockapi.io/annotations")
-      .then((response) => response.json())
-      .then((json) => {
-        setAnnotationsMocks(json);
-        setAnnotations(json);
-      });
-  }, []);
+    const offset = (page - 1) * pageSize;
+    const eachAnnotationsPage = annotations.slice(offset, offset + pageSize);
+    if (eachAnnotationsPage.length) {
+      setCurrentPageAnnotations(eachAnnotationsPage);
+    }
+  }, [annotations]);
 
-  useEffect(() => {
-    setAnnotationsPage(pagination);
-  }, [annotations, page]);
+  const pagination = useMemo(() => {
+    const offset = (page - 1) * pageSize;
+    const eachAnnotationsPage = annotations.slice(offset, offset + pageSize);
+    if (eachAnnotationsPage.length) {
+      setCurrentPageAnnotations(eachAnnotationsPage);
+    }
+    return eachAnnotationsPage;
+  }, [page]);
 
   function handleInputChange(e: any) {
     const { name, value } = e.target;
     const id = annotations.length + 1;
     setAnnotation((pv) => ({ ...pv, [name]: value, ["id"]: id.toString() }));
-  }
-
-  async function onSubmit(e: any) {
-    e.preventDefault(0);
-    annotations.push(annotation);
-    setAnnotationsPage(pagination);
-    setAnnotation({
-      ["id"]: "0",
-      ["name"]: "",
-      ["group"]: IGroup.GENERAL,
-    });
   }
 
   async function searchTask(e: any) {
@@ -118,34 +110,48 @@ export default function Home() {
     return setAnnotations(annotationsMocks);
   }
 
-  // COM USE MEMO
-  // const returnPage = useMemo(() => {
-  //   if (page === 1) {
-  //     return setDisableReturnButtonPage(true);
-  //   }
-  //   setDisableAdvanceButtonPage(false);
-  //   setDisableReturnButtonPage(false);
-  //   return setPage(page - 1);
-  // }, [page]);
-
-  //SEM USE MEMO
   const returnPage = () => {
     if (page === 1) {
-      return setDisableReturnButtonPage(true);
+      setDisableReturnButtonPage(true);
+      return setDisableAdvanceButtonPage(false);
     }
-    setDisableAdvanceButtonPage(false);
-    setDisableReturnButtonPage(false);
+    if (page === pageCount.length) {
+      setDisableAdvanceButtonPage(true);
+      setDisableReturnButtonPage(false);
+      return setPage(page - 1);
+    }
     return setPage(page - 1);
   };
 
   const advancePage = () => {
-    const lastPage = pageCount.length;
-    if (page === lastPage) {
-      return setDisableAdvanceButtonPage(true);
+    if (page === pageCount.length) {
+      setDisableAdvanceButtonPage(true);
+      return setDisableReturnButtonPage(false);
     }
+    if (page === 1) {
+      setDisableReturnButtonPage(true);
+      setDisableAdvanceButtonPage(false);
+      return setPage(page + 1);
+    }
+
+    return setPage(page + 1);
+  };
+
+  const choosenPage = (pageNum: number) => {
+    if (pageNum === 1) {
+      setDisableReturnButtonPage(true);
+      setDisableAdvanceButtonPage(false);
+      return setPage(pageNum);
+    }
+    if (pageNum === pageCount.length) {
+      setDisableAdvanceButtonPage(true);
+      setDisableReturnButtonPage(false);
+      return setPage(pageNum);
+    }
+
     setDisableReturnButtonPage(false);
     setDisableAdvanceButtonPage(false);
-    return setPage(page + 1);
+    return setPage(pageNum);
   };
 
   const handleGroupFilter = async (index: any) => {
@@ -155,6 +161,34 @@ export default function Home() {
     });
     return setAnnotations(groupFilter);
   };
+
+  async function onSubmit(e: any) {
+    e.preventDefault(0);
+    annotations.push(annotation);
+
+    setAnnotation({
+      ["id"]: "0",
+      ["name"]: "",
+      ["group"]: IGroup.GENERAL,
+    });
+  }
+  useEffect(() => {
+    const fetchData = async () => {
+      fetch("https://6679ca0318a459f6395172e9.mockapi.io/annotations")
+        .then((response) => response.json())
+        .then((json) => {
+          setAnnotationsMocks(json);
+          setAnnotations(json);
+        });
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const teste = Math.floor(pageCount.length);
+    console.log(pageCount);
+    console.log(teste);
+  }, [pageCount]);
 
   return (
     <Flex
@@ -252,28 +286,27 @@ export default function Home() {
                 </Tr>
               </Thead>
               <Tbody>
-                {annotationsPageVisibility &&
-                  annotationsPage.map((annotations) => (
-                    <Tr key={annotations.id}>
-                      <Td>{annotations.id}</Td>
-                      <Td>
-                        {" "}
-                        <Badge>{IGroupValue[annotations.group]}</Badge>
-                      </Td>
-                      <Td>{annotations.name}</Td>
-                    </Tr>
-                  ))}
-                {!annotationsPageVisibility &&
-                  annotations.map((annotations) => (
-                    <Tr key={annotations.id}>
-                      <Td>{annotations.id}</Td>
-                      <Td>
-                        {" "}
-                        <Badge>{IGroupValue[annotations.group]}</Badge>
-                      </Td>
-                      <Td>{annotations.name}</Td>
-                    </Tr>
-                  ))}
+                {annotationsPageVisibility
+                  ? currentPageAnnotations.map((annotations) => (
+                      <Tr key={annotations.id}>
+                        <Td>{annotations.id}</Td>
+                        <Td>
+                          {" "}
+                          <Badge>{IGroupValue[annotations.group]}</Badge>
+                        </Td>
+                        <Td>{annotations.name}</Td>
+                      </Tr>
+                    ))
+                  : annotations.map((annotations) => (
+                      <Tr key={annotations.id}>
+                        <Td>{annotations.id}</Td>
+                        <Td>
+                          {" "}
+                          <Badge>{IGroupValue[annotations.group]}</Badge>
+                        </Td>
+                        <Td>{annotations.name}</Td>
+                      </Tr>
+                    ))}
               </Tbody>
             </Table>
             <Flex
@@ -291,9 +324,7 @@ export default function Home() {
                 {pageCount.map((pageCount) => (
                   <Button
                     key={pageCount}
-                    onClick={() => {
-                      setPage(pageCount);
-                    }}
+                    onClick={() => choosenPage(pageCount)}
                   >
                     {pageCount}
                   </Button>
