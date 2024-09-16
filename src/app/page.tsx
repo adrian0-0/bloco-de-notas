@@ -50,9 +50,9 @@ export default function Home() {
   const [annotations, setAnnotations] = useState<IAnnotation[]>([]);
   const [annotationsMocks, setAnnotationsMocks] = useState<IAnnotation[]>([]);
   const [annotation, setAnnotation] = useState<IAnnotation>({
-    id: "0",
     name: "",
     group: IGroup.GENERAL,
+    id: "0",
   });
   const [currentPageAnnotations, setCurrentPageAnnotations] = useState<
     IAnnotation[]
@@ -71,22 +71,16 @@ export default function Home() {
     const pageNumber = Math.ceil(annotations.length / pageSize);
     const pageArray = Array.from({ length: pageNumber }, (v, i) => i + 1);
     setPageCount(pageArray);
-
-    const offset = (page - 1) * pageSize;
-    const eachAnnotationsPage = annotations.slice(offset, offset + pageSize);
-    if (eachAnnotationsPage.length) {
-      setCurrentPageAnnotations(eachAnnotationsPage);
-    }
   }, [annotations]);
 
-  const pagination = useMemo(() => {
+  const eachPageContent = useMemo(() => {
     const offset = (page - 1) * pageSize;
     const eachAnnotationsPage = annotations.slice(offset, offset + pageSize);
+
     if (eachAnnotationsPage.length) {
       setCurrentPageAnnotations(eachAnnotationsPage);
     }
-    return eachAnnotationsPage;
-  }, [page]);
+  }, [annotations, page]);
 
   function handleInputChange(e: any) {
     const { name, value } = e.target;
@@ -96,19 +90,35 @@ export default function Home() {
 
   async function searchTask(e: any) {
     const { name, value } = e.target;
-    setAnnotationsPageVisibility(false);
-    const lowerCaseValue = value.toLowerCase();
-    const regex = new RegExp(`${lowerCaseValue}`);
-    const filterAnnotation = annotationsMocks.filter((e) =>
-      e.name.toLowerCase().match(regex)
-    );
-    if (value) {
-      return setAnnotations(filterAnnotation);
-    } else if (value === "") {
-      setAnnotationsPageVisibility(true);
+    if (value === "") {
+      return setAnnotations(annotationsMocks);
     }
-    return setAnnotations(annotationsMocks);
+
+    const searchFilter = annotations.filter((annotations) => {
+      return annotations.name.toLowerCase().includes(value.toLowerCase());
+    });
+
+    if (searchFilter.length === 0) {
+      return setAnnotations([
+        {
+          id: "0",
+          name: "Nenhum Resultado Encontrado",
+          group: IGroup.GENERAL,
+        },
+      ]);
+    }
+    return setAnnotations(searchFilter);
   }
+
+  const handleGroupFilter = async (index: any) => {
+    if (index === "all") {
+      return setAnnotations(annotationsMocks);
+    }
+    const groupFilter = annotationsMocks.filter(function (e) {
+      return e.group === index;
+    });
+    return setAnnotations(groupFilter);
+  };
 
   const returnPage = () => {
     if (page === 1) {
@@ -154,22 +164,14 @@ export default function Home() {
     return setPage(pageNum);
   };
 
-  const handleGroupFilter = async (index: any) => {
-    setAnnotationsPageVisibility(false);
-    const groupFilter = annotationsMocks.filter(function (e) {
-      return e.group === index;
-    });
-    return setAnnotations(groupFilter);
-  };
-
   async function onSubmit(e: any) {
     e.preventDefault(0);
-    annotations.push(annotation);
+    setAnnotations((pv) => [...pv, annotation]);
 
     setAnnotation({
-      ["id"]: "0",
-      ["name"]: "",
-      ["group"]: IGroup.GENERAL,
+      id: "0",
+      name: "",
+      group: IGroup.GENERAL,
     });
   }
   useEffect(() => {
@@ -185,10 +187,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const teste = Math.floor(pageCount.length);
-    console.log(pageCount);
-    console.log(teste);
-  }, [pageCount]);
+    console.log(annotations);
+  }, [annotations]);
 
   return (
     <Flex
@@ -214,7 +214,7 @@ export default function Home() {
                   placeholder="Digite uma anotação"
                   name={"name"}
                   onChange={(e: any) => handleInputChange(e)}
-                  value={annotation.name}
+                  value={annotation?.name}
                 ></Input>
               </FormControl>
               <FormControl isRequired>
