@@ -10,6 +10,7 @@ export enum IGroup {
   ROUTINE = "routine",
   HEALTHY = "healthy",
   FINANCE = "finance",
+  ALL = "all",
 }
 
 export enum IGroupValue {
@@ -18,4 +19,5 @@ export enum IGroupValue {
   "routine" = "Rotina",
   "healthy" = "Saúde",
   "finance" = "Finanças",
+  "all" = "Todos",
 }
